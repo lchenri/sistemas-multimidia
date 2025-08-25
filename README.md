@@ -1,3 +1,9 @@
+# Alunos
+Leonorico Eduardo de Paula Borges 202135032
+
+Lucas Henrique de Araújo Cardoso 202135038
+
+Pedro Andrade Pereira Leão 202035008
 
 # Sistemas Multimídia
 
