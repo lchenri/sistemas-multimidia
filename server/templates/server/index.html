@@ -1,0 +1,516 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistema de Reconhecimento de Emoções</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --dark-bg: #1a1a2e;
+            --card-bg: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --text-secondary: #b8b8b8;
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            --border-radius: 20px;
+            --transition: all 0.2s ease; /* Reduzido de 0.3s para 0.2s */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--dark-bg);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Background simplificado - animações pesadas pioram o desempenho  */
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--primary-gradient);
+            z-index: -1;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 2rem 0;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, #fff, #f0f0f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            font-weight: 300;
+        }
+
+        /* Container principal */
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 2rem;
+            gap: 2rem;
+        }
+
+        /* Card do vídeo otimizado para performance */
+        .video-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .video-container {
+            position: relative;
+            border-radius: 15px;
+            overflow: hidden;
+            background: #000;
+            aspect-ratio: 4/3;
+        }
+
+        .video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 15px;
+        }
+
+        /* Overlay de status */
+        .status-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #ff4757;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-indicator.active {
+            background: #2ed573;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: var(--accent-gradient);
+            box-shadow: 0 4px 15px 0 rgba(79, 172, 254, 0.35);
+        }
+
+        .btn-secondary {
+            background: var(--secondary-gradient);
+            box-shadow: 0 4px 15px 0 rgba(245, 87, 108, 0.35);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        /* Info Cards - simplificados */
+        .info-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 1000px;
+            margin-top: 2rem;
+        }
+
+        .info-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .info-card i {
+            font-size: 2.5rem;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .info-card h3 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .info-card p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 4rem;
+            padding: 2rem 0;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .footer p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+
+        .social-links a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: var(--card-bg);
+            color: var(--text-primary);
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .header p {
+                font-size: 1rem;
+            }
+
+            .video-card {
+                margin: 0 1rem;
+                padding: 1.5rem;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 200px;
+                justify-content: center;
+            }
+
+            .info-section {
+                grid-template-columns: 1fr;
+                padding: 0 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-container {
+                padding: 0 1rem;
+            }
+
+            .video-card {
+                margin: 0;
+                padding: 1rem;
+            }
+        }
+
+        /* Loading animation - simplificada */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Hidden elements */
+        #video, #canvas {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="background-animation"></div>
+
+    <video id='video' autoplay playsinline></video>
+    <canvas id="canvas" width="400" height="300"></canvas>
+
+    <div class="header">
+        <h1><i class="fas fa-brain"></i> Sistema de Reconhecimento de Emoções</h1>
+        <p>Tecnologia avançada de inteligência artificial para análise facial em tempo real</p>
+    </div>
+
+    <div class="main-container">
+        <div class="video-card">
+            <div class="video-container">
+                <img id='client' class="video" src='https://cdn.discordapp.com/attachments/848543264783990804/1051901701654851705/face.gif' alt="Sistema de reconhecimento facial">
+                <div class="status-overlay">
+                    <span class="status-indicator" id="statusIndicator"></span>
+                    <span id="statusText">Desconectado</span>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="btn btn-primary" id="toggleBtn" onclick='toggleMode()'>
+                    <i class="fas fa-play" id="btnIcon"></i>
+                    <span id="btnText">Iniciar Câmera</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <div class="info-card">
+                <i class="fas fa-eye"></i>
+                <h3>Detecção Facial</h3>
+                <p>Utiliza algoritmos avançados de visão computacional para detectar rostos em tempo real com alta precisão.</p>
+            </div>
+            <div class="info-card">
+                <i class="fas fa-smile"></i>
+                <h3>Análise de Emoções</h3>
+                <p>Classifica 7 emoções diferentes: alegria, tristeza, raiva, surpresa, medo, nojo e neutralidade.</p>
+            </div>
+            <div class="info-card">
+                <i class="fas fa-chart-line"></i>
+                <h3>Performance em Tempo Real</h3>
+                <p>Processamento otimizado com exibição de FPS e latência mínima para análise instantânea.</p>
+            </div>
+            <div class="info-card">
+                <i class="fas fa-shield-alt"></i>
+                <h3>Privacidade Segura</h3>
+                <p>Processamento local sem armazenamento de dados, garantindo total privacidade dos usuários.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>&copy; 2025. Desenvolvido para a disciplina de sistemas multimídia</p>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+        const video = document.getElementById('video');
+        const img = document.getElementById("client");
+        const toggleBtn = document.getElementById('toggleBtn');
+        const btnIcon = document.getElementById('btnIcon');
+        const btnText = document.getElementById('btnText');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+
+        const ws_scheme = window.location.protocol == "https:" ? "wss" : "ws";
+        let isActive = false;
+        let ws = null;
+
+        video.width = 400;
+        video.height = 300;
+
+        function updateStatus(status, text) {
+            if (status === 'connected') {
+                statusIndicator.classList.add('active');
+                statusText.textContent = text || 'Conectado';
+            } else {
+                statusIndicator.classList.remove('active');
+                statusText.textContent = text || 'Desconectado';
+            }
+        }
+
+        function updateButton(active) {
+            if (active) {
+                btnIcon.className = 'fas fa-stop';
+                btnText.textContent = 'Parar Câmera';
+                toggleBtn.classList.remove('btn-primary');
+                toggleBtn.classList.add('btn-secondary');
+            } else {
+                btnIcon.className = 'fas fa-play';
+                btnText.textContent = 'Iniciar Câmera';
+                toggleBtn.classList.remove('btn-secondary');
+                toggleBtn.classList.add('btn-primary');
+            }
+        }
+
+        function showLoading() {
+            btnIcon.className = 'loading';
+            btnText.textContent = 'Conectando...';
+            toggleBtn.disabled = true;
+        }
+
+        function hideLoading() {
+            toggleBtn.disabled = false;
+        }
+
+        function toggleMode() {
+            if (!isActive) {
+                startCamera();
+            } else {
+                stopCamera();
+            }
+        }
+
+        function startCamera() {
+            showLoading();
+            updateStatus('connecting', 'Conectando...');
+
+            ws = new WebSocket(ws_scheme + '://' + window.location.host + '/');
+
+            ws.onopen = (event) => {
+                console.log('WebSocket conectado!');
+                updateStatus('connected', 'Analisando...');
+                hideLoading();
+                isActive = true;
+                updateButton(true);
+            };
+
+            ws.onmessage = (event) => {
+                const frameUpdate = event.data;
+                img.src = "data:image/jpeg;base64," + frameUpdate;
+            };
+
+            ws.onclose = (event) => {
+                console.log('WebSocket desconectado');
+                updateStatus('disconnected');
+                isActive = false;
+                updateButton(false);
+                hideLoading();
+            };
+
+            ws.onerror = (error) => {
+                console.error('Erro no WebSocket:', error);
+                updateStatus('error', 'Erro de conexão');
+                hideLoading();
+            };
+
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(function(stream) {
+                        video.srcObject = stream;
+                        video.play();
+
+                        const width = video.width;
+                        const height = video.height;
+                        const delay = 100; // MANTÉM EXATAMENTE O MESMO DELAY DO ORIGINAL
+                        const jpegQuality = 0.7;
+
+                        const interval = setInterval(function() {
+                            if (!isActive) {
+                                clearInterval(interval);
+                                return;
+                            }
+
+                            context.drawImage(video, 0, 0, width, height);
+                            canvas.toBlob(function(blob) {
+                                if (ws && ws.readyState === WebSocket.OPEN) {
+                                    ws.send(blob);
+                                }
+                            }, 'image/jpeg', jpegQuality);
+                        }, delay); // USA O DELAY ORIGINAL
+                    })
+                    .catch(function(error) {
+                        console.error('Erro ao acessar a câmera:', error);
+                        updateStatus('error', 'Erro ao acessar câmera');
+                        hideLoading();
+                    });
+            } else {
+                updateStatus('error', 'Câmera não suportada');
+                hideLoading();
+            }
+        }
+
+        function stopCamera() {
+            isActive = false;
+            updateButton(false);
+            updateStatus('disconnected');
+
+            if (video.srcObject) {
+                video.pause();
+                video.srcObject.getVideoTracks()[0].stop();
+                video.srcObject = null;
+            }
+
+            if (ws) {
+                ws.send(new Uint8Array([])); // MANTÉM A MESMA LÓGICA DE PARADA
+                ws.close();
+                ws = null;
+            }
+
+            img.src = 'https://cdn.discordapp.com/attachments/848543264783990804/1051901701654851705/face.gif';
+        }
+    </script>
+</body>
+</html>
